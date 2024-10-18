@@ -8,6 +8,7 @@ import pandas as pd
 
 def main(page: ft.Page):
 
+
     branco = "#F4F5F0"
     azul = "#4895EF"
     verde = "#75975e"
@@ -412,7 +413,6 @@ def main(page: ft.Page):
         page.update()
 
     
-    
     data_inicial = ft.Text(value=0, size=15, color=ft.colors.WHITE)
     data_final = ft.Text(value=0, size=15, color=ft.colors.WHITE)
 
@@ -440,20 +440,20 @@ def main(page: ft.Page):
             'total_transacoes': total_transacoes,
             'qtd_transacoes': qtd_transacoes
         }
-    
 
-    # Inicializando as variáveis globais com None
+     # Inicializando as variáveis globais com None
     data_inicial_datetime = None
     data_final_datetime = None
 
+   
     def on_date_selected(e):
 
         global data_inicial_datetime, data_final_datetime
 
         if e.control.value:
             selected_date = e.control.value
-
             data_formatada = selected_date.strftime("%d/%m/%y")
+
             if e.control.data == "from_date":
                 data_inicial.value = f"De: {data_formatada}"
                 data_inicial_datetime = selected_date
@@ -462,30 +462,34 @@ def main(page: ft.Page):
                 data_final.value = f"Até: {data_formatada}"
                 data_final_datetime = selected_date
                 data_final.update()
-
-# Chamar a função de filtragem apenas quando ambas as datas forem selecionadas
-
-        while True:
-
-            # Checar se ambas as datas foram selecionadas (ou se data final foi preenchida automaticamente)
-            if data_inicial_datetime and data_final_datetime:
                 
-                df_filtrados = filtrar_dados_por_periodo(data_inicial_datetime, data_final_datetime)
-                resultados = calcular_totais(df_filtrados)
 
+        # Chamar a função de filtragem apenas quando ambas as datas forem selecionadas
+        # Se a data final ainda não foi selecionada, interrompe a execução
+        if data_inicial_datetime is not None and data_final_datetime is None:
+            return
+        # Checar se ambas as datas foram selecionadas (ou se data final foi preenchida automaticamente)
+       
+        if data_inicial_datetime is not None and data_final_datetime is not None :
 
-                # Usando os resultados nas variáveis
-                quantidade_entrada.value = f"{resultados['qtd_entradas']}. Entradas"
-                valor_entrada.value = f"R$      {resultados['total_entradas']:.2f}"
-                quantidade_saida.value = f"{resultados['qtd_saidas']}. Saídas"
-                valor_saida.value = f"R$      {resultados['total_saidas']:.2f}"
-                quantidade_transacoes.value = f"{resultados['qtd_transacoes']}. Transações"
-                valor_transacoes.value = f"R$      {resultados['total_transacoes']:.2f}"
-                page.update()
-            else:
-                return
+            df_filtrados = filtrar_dados_por_periodo(data_inicial_datetime, data_final_datetime)
+            resultados = calcular_totais(df_filtrados)
 
-    page.update()
+            # Usando os resultados nas variáveis
+            quantidade_entrada.value = f"{resultados['qtd_entradas']}. Entradas"
+            valor_entrada.value = f"R$      {resultados['total_entradas']:.2f}"
+            quantidade_saida.value = f"{resultados['qtd_saidas']}. Saídas"
+            valor_saida.value = f"R$      {resultados['total_saidas']:.2f}"
+            quantidade_transacoes.value = f"{resultados['qtd_transacoes']}. Transações"
+            valor_transacoes.value = f"R$      {resultados['total_transacoes']:.2f}"
+            page.update()
+        else:
+            # Se as duas datas não estiverem selecionadas, exibe uma mensagem de aviso ou faz algo para esperar
+            print("Aguardando a seleção de ambas as datas.")
+
+        # Usar df filtrado pra agrupar cada transação e somar seu respectivos valores e quantos % isso representa 
+        # do total de saídas e entradas
+
     
     # Função que usa os objetos datetime
     def filtrar_dados_por_periodo(data_inicial_datetime, data_final_datetime):
@@ -499,6 +503,7 @@ def main(page: ft.Page):
         df_filtrado = df[(df['Data'] >= data_inicial_datetime) & (df['Data'] <= data_final_datetime)]
 
         return df_filtrado
+    
 
     datepicker_de = ft.DatePicker(
         open=False,
