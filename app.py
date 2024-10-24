@@ -7,7 +7,17 @@ import pandas as pd
 
 
 def main(page: ft.Page):
+    global desc_porc_real
 
+
+    desc_porc_real = ft.Container(
+        padding=1,
+        margin=5,
+        border_radius=10,
+        content=ft.Column([], scroll=ft.ScrollMode.AUTO)  # Começa com uma coluna vazia
+    )
+
+    page.add(desc_porc_real)
 
     branco = "#F4F5F0"
     azul = "#4895EF"
@@ -577,11 +587,13 @@ def main(page: ft.Page):
         )
     )
 
+    
     def filtrar_tipo(e):
 
         global data_inicial_datetime, data_final_datetime
 
         tipo = e.control.data
+        
 
         if data_inicial_datetime is None or data_final_datetime is None:
             print("Erro: As datas não foram definidas corretamente.")
@@ -598,13 +610,56 @@ def main(page: ft.Page):
             
 
     def precessar_dados(df):
+
+        global desc_porc_real
+
         df_agrupado = df.groupby('Descrição').agg(Quantidade=('Descrição', 'count'),
         Soma=('Valor', 'sum')).reset_index()
         valor_total = df['Valor'].sum()
         df_agrupado['Porcentagem'] = (df_agrupado['Soma']/valor_total) * 100
-        return df_agrupado
         
+        
+        # Limpar o conteúdo do container antes de adicionar novos dados
+        desc_porc_real.content.controls.clear()
 
+        for _, row in df_agrupado.iterrows():
+            quant_filtrada = row['Quantidade']
+            descricao_filtrada = row['Descrição']
+            valor_filtrada = row['Soma']
+            porcentagem_filtrada = row['Porcentagem']
+
+            # Criar uma nova linha com os valores para cada descrição
+            des_detalhada = ft.Row(
+            [
+                ft.Text(value=f'{quant_filtrada} x {descricao_filtrada}     ', color=ft.colors.WHITE, size=15, weight=ft.FontWeight.W_300),
+                ft.Text(value=f'{valor_filtrada:.2f} R$     ', color=ft.colors.WHITE, size=15, weight=ft.FontWeight.W_300),
+                ft.Text(value=f'{porcentagem_filtrada:.2f} %', color=ft.colors.WHITE, size=15, weight=ft.FontWeight.W_300),
+            ],
+            spacing=5,
+            alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+        )
+
+            desc_porc_real.content.controls.append(
+                ft.Container(
+                    #expand=True,
+                    padding=0,
+                    margin=0,
+                    border_radius=10,
+                    content=ft.Column(
+                        [
+                            ft.Container(
+                                padding=0,
+                                margin=0,
+                                bgcolor=ft.colors.BLUE,
+                                border_radius=10,
+                                height=50,
+                                content=des_detalhada
+                            ),
+                        ]
+                    )
+                )
+            )
+    desc_porc_real.update()
 
 
     filtro_tipo = ft.Container(
@@ -635,37 +690,6 @@ def main(page: ft.Page):
         )
     )
 
- 
-    des_detalhada = ft.Row(
-        [
-            ft.Text(value='25 x Padaria', color=ft.colors.BLACK, size=12),
-            ft.Text(value='12 %', color=ft.colors.BLACK, size=12),
-            ft.Text(value='250.00 R$'),
-        ]
-    )
-    desc_porc_real = ft.Container(
-        expand=True,
-        padding=10,
-        margin=5,
-        border_radius=10,
-        content=ft.Column(
-            [
-                ft.Container(
-                    padding=15,
-                    margin=5,
-                    bgcolor=ft.colors.CYAN,
-                    border_radius=10,
-                    height=50,
-                    content=ft.Row(
-                        [
-                            des_detalhada,
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-                    )
-                ),
-            ]
-        ),
-    )
 
     barras_forma = ft.Container(
         expand=True,
@@ -794,6 +818,8 @@ def main(page: ft.Page):
         )
     )
 
+    tipo_selecionado = ''
+
     painel = ft.Container(
         content=ft.Column(
             [ 
@@ -807,21 +833,18 @@ def main(page: ft.Page):
                 ),
                 ft.Text(value='Categorias das Transações', color=ft.colors.WHITE, size=18, italic=True),
                 barras_forma,
-                ft.Text(value='Sobre as Transações', color=ft.colors.WHITE, size=18, italic=True),
+                ft.Text(value=f'Sobre as Transações', color=ft.colors.WHITE, size=18, italic=True),
                 desc_porc_real
-
             ],
             scroll=ft.ScrollMode.AUTO,
         ),
-        expand=True,
     )
-
 
 
     pg_analise = ft.Container(
         expand=True,
         bgcolor=ft.colors.BLACK,
-        padding=10,
+        padding=5,
         content=ft.Column(
             [
                 ft.Row(
@@ -906,7 +929,7 @@ def main(page: ft.Page):
             spacing=10,
         )
     )
-
+    
     # Inicia o app buscando o histórico atualizado
     atualizar_historico()
 
