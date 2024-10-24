@@ -591,12 +591,20 @@ def main(page: ft.Page):
         
         if tipo == 'E':
             df_filtrado_entrada = df[df['Tipo'] == 'Entrada']
-            df_filtrado_entrada
+            precessar_dados(df_filtrado_entrada)            
         elif tipo == 'S':
             df_filtrado_saida = df[df['Tipo'] == 'Saída']
-            df_filtrado_saida
+            precessar_dados(df_filtrado_saida)  
+            
 
+    def precessar_dados(df):
+        df_agrupado = df.groupby('Descrição').agg(Quantidade=('Descrição', 'count'),
+        Soma=('Valor', 'sum')).reset_index()
+        valor_total = df['Valor'].sum()
+        df_agrupado['Porcentagem'] = (df_agrupado['Soma']/valor_total) * 100
+        return df_agrupado
         
+
 
 
     filtro_tipo = ft.Container(
